@@ -1,0 +1,7 @@
+arm-toolchain
+riscv-toolchain
+picotool
+pico-sdk-tools
+pico-sdk
+pico-examples
+build*

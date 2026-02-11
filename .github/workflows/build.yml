@@ -1,0 +1,80 @@
+name: Build UF2s
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: write
+
+env:
+  # links from pico-vscode
+  ARM_TOOLCHAIN_URL: https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu/14.2.rel1/binrel/arm-gnu-toolchain-14.2.rel1-x86_64-arm-none-eabi.tar.xz
+  RISCV_TOOLCHAIN_URL: https://github.com/raspberrypi/pico-sdk-tools/releases/download/v2.2.0-3/riscv-toolchain-15-x86_64-lin.tar.gz
+  PICOTOOL_URL: https://github.com/raspberrypi/pico-sdk-tools/releases/download/v2.2.0-3/picotool-2.2.0-a4-x86_64-lin.tar.gz
+  PICO_SDK_TOOLS_URL: https://github.com/raspberrypi/pico-sdk-tools/releases/download/v2.2.0-3/pico-sdk-tools-2.2.0-x86_64-lin.tar.gz
+
+jobs:
+  build-uf2s:
+    name: Build UF2s
+    runs-on: ubuntu-latest
+    # Prevent running twice for PRs from same repo
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install dependencies
+        run: sudo apt install cmake ninja-build python3 build-essential libusb-1.0-0-dev
+      - name: Install ARM & Risc-V Toolchains
+        run: |
+          mkdir -p arm-toolchain
+          curl -L ${{ env.ARM_TOOLCHAIN_URL }} -o arm-toolchain/arm-toolchain.tar.xz
+          tar -xf arm-toolchain/arm-toolchain.tar.xz -C arm-toolchain --strip-components=1
+          ls arm-toolchain
+          mkdir -p riscv-toolchain
+          curl -L ${{ env.RISCV_TOOLCHAIN_URL }} -o riscv-toolchain/riscv-toolchain.tar.gz
+          tar -xzf riscv-toolchain/riscv-toolchain.tar.gz -C riscv-toolchain
+          ls riscv-toolchain
+      - name: Install Pico SDK Tools
+        run: |
+          mkdir -p picotool
+          curl -L ${{ env.PICOTOOL_URL }} -o picotool/picotool.tar.gz
+          tar -xzf picotool/picotool.tar.gz -C picotool
+          ls picotool
+          mkdir -p pico-sdk-tools
+          curl -L ${{ env.PICO_SDK_TOOLS_URL }} -o pico-sdk-tools/pico-sdk-tools.tar.gz
+          tar -xzf pico-sdk-tools/pico-sdk-tools.tar.gz -C pico-sdk-tools
+          ls pico-sdk-tools
+      - name: Checkout Pico SDK
+        uses: actions/checkout@v4
+        with:
+          repository: raspberrypi/pico-sdk
+          ref: develop
+          path: pico-sdk
+          submodules: 'recursive'
+      - name: Checkout Pico Examples
+        uses: actions/checkout@v4
+        with:
+          repository: raspberrypi/pico-examples
+          ref: develop
+          path: pico-examples
+      - name: Build Universal UF2s
+        run: |
+          cmake -S pico-examples -B build-universal -G "Ninja" -D PICO_SDK_PATH="${{ github.workspace }}/pico-sdk" -D PICO_TOOLCHAIN_PATH="${{ github.workspace }}/arm-toolchain" -D PICO_ARM_TOOLCHAIN_PATH="${{ github.workspace }}/arm-toolchain" -D PICO_RISCV_TOOLCHAIN_PATH="${{ github.workspace }}/riscv-toolchain" -D picotool_DIR="${{ github.workspace }}/picotool/picotool" -D pioasm_DIR="${{ github.workspace }}/pico-sdk-tools/pioasm"
+          cmake --build build-universal --target hello_universal blink_universal nuke_universal
+      - name: Upload UF2s
+        uses: actions/upload-artifact@v4
+        with:
+          name: uf2s
+          path: |
+            build-universal/universal/blink_universal/blink_universal.uf2
+            build-universal/universal/hello_universal/hello_universal.uf2
+            build-universal/universal/nuke_universal/nuke_universal.uf2
+      - name: Add Release Asset
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            build-universal/universal/blink_universal/blink_universal.uf2
+            build-universal/universal/hello_universal/hello_universal.uf2
+            build-universal/universal/nuke_universal/nuke_universal.uf2
