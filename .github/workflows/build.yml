@@ -10,11 +10,19 @@ on:
         required: false
         type: string
       sdk_tag:
-        description: 'SDK tag'
+        description: 'Custom SDK tag'
         required: false
         type: string
       examples_tag:
-        description: 'Examples tag'
+        description: 'Custom Examples tag'
+        required: false
+        type: string
+      sdk_repo:
+        description: 'Custom SDK repo'
+        required: false
+        type: string
+      examples_repo:
+        description: 'Custom Examples repo'
         required: false
         type: string
 
@@ -25,6 +33,8 @@ env:
   TOOLS_VERSION: ${{ inputs.tools_version != '' && inputs.tools_version || '2.2.0' }}
   SDK_TAG: ${{ inputs.sdk_tag != '' && inputs.sdk_tag || '2.2.0' }}
   EXAMPLES_TAG: ${{ inputs.examples_tag != '' && inputs.examples_tag || 'sdk-2.2.0' }}
+  SDK_REPO: ${{ inputs.sdk_repo != '' && inputs.sdk_repo || 'raspberrypi/pico-sdk' }}
+  EXAMPLES_REPO: ${{ inputs.examples_repo != '' && inputs.examples_repo || 'raspberrypi/pico-examples' }}
 
 jobs:
   build-uf2s:
@@ -41,22 +51,26 @@ jobs:
         id: cache-toolchains
         uses: actions/cache@v5
         with:
-          path: arm-toolchain riscv-toolchain picotool pico-sdk-tools
-          key: ${{ runner.os }}-${{ env.TOOLS_VERSION }}-toolchains
+          path: |
+            arm-toolchain
+            riscv-toolchain
+            picotool
+            pico-sdk-tools
+          key: ${{ runner.os }}-${{ runner.arch }}-${{ env.TOOLS_VERSION }}-toolchains
       - name: Install Toolchains & Tools
         if: steps.cache-toolchains.outputs.cache-hit != 'true'
         run: ./download_extract_tools.sh ${{ env.TOOLS_VERSION }}
       - name: Checkout Pico SDK
         uses: actions/checkout@v4
         with:
-          repository: raspberrypi/pico-sdk
+          repository: ${{ env.SDK_REPO }}
           ref: ${{ env.SDK_TAG }}
           path: pico-sdk
           submodules: 'recursive'
       - name: Checkout Pico Examples
         uses: actions/checkout@v4
         with:
-          repository: raspberrypi/pico-examples
+          repository: ${{ env.EXAMPLES_REPO }}
           ref: ${{ env.EXAMPLES_TAG }}
           path: pico-examples
       - name: Build Universal UF2s
