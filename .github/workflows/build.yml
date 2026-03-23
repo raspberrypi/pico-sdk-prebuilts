@@ -5,24 +5,24 @@ on:
   pull_request:
   workflow_dispatch:
     inputs:
-      tools_version:
-        description: 'Tools version'
+      sdk_tools_version:
+        description: 'Custom Pico SDK Tools version'
         required: false
         type: string
-      sdk_tag:
-        description: 'Custom SDK tag'
+      pico_sdk_tag:
+        description: 'Custom Pico SDK tag'
         required: false
         type: string
-      examples_tag:
-        description: 'Custom Examples tag'
+      pico_examples_tag:
+        description: 'Custom Pico Examples tag'
         required: false
         type: string
-      sdk_repo:
-        description: 'Custom SDK repo'
+      pico_sdk_repo:
+        description: 'Custom Pico SDK repo'
         required: false
         type: string
-      examples_repo:
-        description: 'Custom Examples repo'
+      pico_examples_repo:
+        description: 'Custom Pico Examples repo'
         required: false
         type: string
 
@@ -30,11 +30,11 @@ permissions:
   contents: write
 
 env:
-  TOOLS_VERSION: ${{ inputs.tools_version != '' && inputs.tools_version || '2.2.0' }}
-  SDK_TAG: ${{ inputs.sdk_tag != '' && inputs.sdk_tag || '2.2.0' }}
-  EXAMPLES_TAG: ${{ inputs.examples_tag != '' && inputs.examples_tag || 'sdk-2.2.0' }}
-  SDK_REPO: ${{ inputs.sdk_repo != '' && inputs.sdk_repo || 'raspberrypi/pico-sdk' }}
-  EXAMPLES_REPO: ${{ inputs.examples_repo != '' && inputs.examples_repo || 'raspberrypi/pico-examples' }}
+  SDK_TOOLS_VERSION: ${{ inputs.sdk_tools_version != '' && inputs.sdk_tools_version || '2.2.0' }}
+  PICO_SDK_TAG: ${{ inputs.pico_sdk_tag != '' && inputs.pico_sdk_tag || '2.2.0' }}
+  PICO_EXAMPLES_TAG: ${{ inputs.pico_examples_tag != '' && inputs.pico_examples_tag || 'sdk-2.2.0' }}
+  PICO_SDK_REPO: ${{ inputs.pico_sdk_repo != '' && inputs.pico_sdk_repo || 'raspberrypi/pico-sdk' }}
+  PICO_EXAMPLES_REPO: ${{ inputs.pico_examples_repo != '' && inputs.pico_examples_repo || 'raspberrypi/pico-examples' }}
 
 jobs:
   build-uf2s:
@@ -45,11 +45,11 @@ jobs:
     steps:
       - name: Print environment
         run: |
-          echo "TOOLS_VERSION=${{ env.TOOLS_VERSION }}"
-          echo "SDK_TAG=${{ env.SDK_TAG }}"
-          echo "EXAMPLES_TAG=${{ env.EXAMPLES_TAG }}"
-          echo "SDK_REPO=${{ env.SDK_REPO }}"
-          echo "EXAMPLES_REPO=${{ env.EXAMPLES_REPO }}"
+          echo "SDK_TOOLS_VERSION=${{ env.SDK_TOOLS_VERSION }}"
+          echo "PICO_SDK_TAG=${{ env.PICO_SDK_TAG }}"
+          echo "PICO_EXAMPLES_TAG=${{ env.PICO_EXAMPLES_TAG }}"
+          echo "PICO_SDK_REPO=${{ env.PICO_SDK_REPO }}"
+          echo "PICO_EXAMPLES_REPO=${{ env.PICO_EXAMPLES_REPO }}"
       - name: Checkout
         uses: actions/checkout@v6
       - name: Install dependencies
@@ -63,26 +63,32 @@ jobs:
             riscv-toolchain
             picotool
             pico-sdk-tools
-          key: ${{ runner.os }}-${{ runner.arch }}-${{ env.TOOLS_VERSION }}-toolchains
+          key: ${{ runner.os }}-${{ runner.arch }}-${{ env.SDK_TOOLS_VERSION }}-toolchains
       - name: Install Toolchains & Tools
         if: steps.cache-toolchains.outputs.cache-hit != 'true'
-        run: ./download_extract_tools.sh ${{ env.TOOLS_VERSION }}
+        run: ./download_extract_tools.sh ${{ env.SDK_TOOLS_VERSION }}
       - name: Checkout Pico SDK
         uses: actions/checkout@v6
         with:
-          repository: ${{ env.SDK_REPO }}
-          ref: ${{ env.SDK_TAG }}
+          repository: ${{ env.PICO_SDK_REPO }}
+          ref: ${{ env.PICO_SDK_TAG }}
           path: pico-sdk
           submodules: 'recursive'
       - name: Checkout Pico Examples
         uses: actions/checkout@v6
         with:
-          repository: ${{ env.EXAMPLES_REPO }}
-          ref: ${{ env.EXAMPLES_TAG }}
+          repository: ${{ env.PICO_EXAMPLES_REPO }}
+          ref: ${{ env.PICO_EXAMPLES_TAG }}
           path: pico-examples
       - name: Build Universal UF2s
         run: |
-          cmake -S pico-examples -B build-universal -G "Ninja" -D PICO_SDK_PATH="${{ github.workspace }}/pico-sdk" -D PICO_TOOLCHAIN_PATH="${{ github.workspace }}/arm-toolchain" -D PICO_ARM_TOOLCHAIN_PATH="${{ github.workspace }}/arm-toolchain" -D PICO_RISCV_TOOLCHAIN_PATH="${{ github.workspace }}/riscv-toolchain" -D picotool_DIR="${{ github.workspace }}/picotool/picotool" -D pioasm_DIR="${{ github.workspace }}/pico-sdk-tools/pioasm"
+          cmake -S pico-examples -B build-universal -G "Ninja" \
+            -D PICO_SDK_PATH="${{ github.workspace }}/pico-sdk" \
+            -D PICO_TOOLCHAIN_PATH="${{ github.workspace }}/arm-toolchain" \
+            -D PICO_ARM_TOOLCHAIN_PATH="${{ github.workspace }}/arm-toolchain" \
+            -D PICO_RISCV_TOOLCHAIN_PATH="${{ github.workspace }}/riscv-toolchain" \
+            -D picotool_DIR="${{ github.workspace }}/picotool/picotool" \
+            -D pioasm_DIR="${{ github.workspace }}/pico-sdk-tools/pioasm"
           cmake --build build-universal --target hello_universal blink_universal nuke_universal
       - name: Upload UF2s
         uses: actions/upload-artifact@v6
