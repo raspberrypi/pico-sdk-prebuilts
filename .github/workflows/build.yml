@@ -3,16 +3,31 @@ name: Build UF2s
 on:
   push:
   pull_request:
+  workflow_dispatch:
+    inputs:
+      tools_version:
+        description: 'Tools version'
+        required: true
+        default: '2.2.0'
+        type: string
+      sdk_tag:
+        description: 'SDK tag'
+        required: true
+        default: '2.2.0'
+        type: string
+      examples_tag:
+        description: 'Examples tag'
+        required: true
+        default: 'sdk-2.2.0'
+        type: string
 
 permissions:
   contents: write
 
 env:
-  # links from pico-vscode
-  ARM_TOOLCHAIN_URL: https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu/14.2.rel1/binrel/arm-gnu-toolchain-14.2.rel1-x86_64-arm-none-eabi.tar.xz
-  RISCV_TOOLCHAIN_URL: https://github.com/raspberrypi/pico-sdk-tools/releases/download/v2.2.0-3/riscv-toolchain-15-x86_64-lin.tar.gz
-  PICOTOOL_URL: https://github.com/raspberrypi/pico-sdk-tools/releases/download/v2.2.0-3/picotool-2.2.0-a4-x86_64-lin.tar.gz
-  PICO_SDK_TOOLS_URL: https://github.com/raspberrypi/pico-sdk-tools/releases/download/v2.2.0-3/pico-sdk-tools-2.2.0-x86_64-lin.tar.gz
+  TOOLS_VERSION: ${{ inputs.tools_version }}
+  SDK_TAG: ${{ inputs.sdk_tag }}
+  EXAMPLES_TAG: ${{ inputs.examples_tag }}
 
 jobs:
   build-uf2s:
@@ -25,38 +40,27 @@ jobs:
         uses: actions/checkout@v4
       - name: Install dependencies
         run: sudo apt install cmake ninja-build python3 build-essential libusb-1.0-0-dev
-      - name: Install ARM & Risc-V Toolchains
-        run: |
-          mkdir -p arm-toolchain
-          curl -L ${{ env.ARM_TOOLCHAIN_URL }} -o arm-toolchain/arm-toolchain.tar.xz
-          tar -xf arm-toolchain/arm-toolchain.tar.xz -C arm-toolchain --strip-components=1
-          ls arm-toolchain
-          mkdir -p riscv-toolchain
-          curl -L ${{ env.RISCV_TOOLCHAIN_URL }} -o riscv-toolchain/riscv-toolchain.tar.gz
-          tar -xzf riscv-toolchain/riscv-toolchain.tar.gz -C riscv-toolchain
-          ls riscv-toolchain
-      - name: Install Pico SDK Tools
-        run: |
-          mkdir -p picotool
-          curl -L ${{ env.PICOTOOL_URL }} -o picotool/picotool.tar.gz
-          tar -xzf picotool/picotool.tar.gz -C picotool
-          ls picotool
-          mkdir -p pico-sdk-tools
-          curl -L ${{ env.PICO_SDK_TOOLS_URL }} -o pico-sdk-tools/pico-sdk-tools.tar.gz
-          tar -xzf pico-sdk-tools/pico-sdk-tools.tar.gz -C pico-sdk-tools
-          ls pico-sdk-tools
+      - name: Cache Toolchains
+        id: cache-toolchains
+        uses: actions/cache@v5
+        with:
+          path: arm-toolchain riscv-toolchain picotool pico-sdk-tools
+          key: ${{ runner.os }}-${{ env.TOOLS_VERSION }}-toolchains
+      - name: Install Toolchains & Tools
+        if: steps.cache-toolchains.outputs.cache-hit != 'true'
+        run: download_extract_tools.sh ${{ env.TOOLS_VERSION }}
       - name: Checkout Pico SDK
         uses: actions/checkout@v4
         with:
           repository: raspberrypi/pico-sdk
-          ref: develop
+          ref: ${{ env.SDK_TAG }}
           path: pico-sdk
           submodules: 'recursive'
       - name: Checkout Pico Examples
         uses: actions/checkout@v4
         with:
           repository: raspberrypi/pico-examples
-          ref: develop
+          ref: ${{ env.EXAMPLES_TAG }}
           path: pico-examples
       - name: Build Universal UF2s
         run: |
