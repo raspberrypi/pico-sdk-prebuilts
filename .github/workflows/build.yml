@@ -43,8 +43,15 @@ jobs:
     # Prevent running twice for PRs from same repo
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name
     steps:
+      - name: Print environment
+        run: |
+          echo "TOOLS_VERSION=${{ env.TOOLS_VERSION }}"
+          echo "SDK_TAG=${{ env.SDK_TAG }}"
+          echo "EXAMPLES_TAG=${{ env.EXAMPLES_TAG }}"
+          echo "SDK_REPO=${{ env.SDK_REPO }}"
+          echo "EXAMPLES_REPO=${{ env.EXAMPLES_REPO }}"
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install dependencies
         run: sudo apt install cmake ninja-build python3 build-essential libusb-1.0-0-dev
       - name: Cache Toolchains
@@ -61,14 +68,14 @@ jobs:
         if: steps.cache-toolchains.outputs.cache-hit != 'true'
         run: ./download_extract_tools.sh ${{ env.TOOLS_VERSION }}
       - name: Checkout Pico SDK
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: ${{ env.SDK_REPO }}
           ref: ${{ env.SDK_TAG }}
           path: pico-sdk
           submodules: 'recursive'
       - name: Checkout Pico Examples
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: ${{ env.EXAMPLES_REPO }}
           ref: ${{ env.EXAMPLES_TAG }}
@@ -78,7 +85,7 @@ jobs:
           cmake -S pico-examples -B build-universal -G "Ninja" -D PICO_SDK_PATH="${{ github.workspace }}/pico-sdk" -D PICO_TOOLCHAIN_PATH="${{ github.workspace }}/arm-toolchain" -D PICO_ARM_TOOLCHAIN_PATH="${{ github.workspace }}/arm-toolchain" -D PICO_RISCV_TOOLCHAIN_PATH="${{ github.workspace }}/riscv-toolchain" -D picotool_DIR="${{ github.workspace }}/picotool/picotool" -D pioasm_DIR="${{ github.workspace }}/pico-sdk-tools/pioasm"
           cmake --build build-universal --target hello_universal blink_universal nuke_universal
       - name: Upload UF2s
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: uf2s
           path: |
