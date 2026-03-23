@@ -7,27 +7,24 @@ on:
     inputs:
       tools_version:
         description: 'Tools version'
-        required: true
-        default: '2.2.0'
+        required: false
         type: string
       sdk_tag:
         description: 'SDK tag'
-        required: true
-        default: '2.2.0'
+        required: false
         type: string
       examples_tag:
         description: 'Examples tag'
-        required: true
-        default: 'sdk-2.2.0'
+        required: false
         type: string
 
 permissions:
   contents: write
 
 env:
-  TOOLS_VERSION: ${{ inputs.tools_version }}
-  SDK_TAG: ${{ inputs.sdk_tag }}
-  EXAMPLES_TAG: ${{ inputs.examples_tag }}
+  TOOLS_VERSION: ${{ inputs.tools_version != '' && inputs.tools_version || '2.2.0' }}
+  SDK_TAG: ${{ inputs.sdk_tag != '' && inputs.sdk_tag || '2.2.0' }}
+  EXAMPLES_TAG: ${{ inputs.examples_tag != '' && inputs.examples_tag || 'sdk-2.2.0' }}
 
 jobs:
   build-uf2s:
@@ -48,7 +45,7 @@ jobs:
           key: ${{ runner.os }}-${{ env.TOOLS_VERSION }}-toolchains
       - name: Install Toolchains & Tools
         if: steps.cache-toolchains.outputs.cache-hit != 'true'
-        run: download_extract_tools.sh ${{ env.TOOLS_VERSION }}
+        run: ./download_extract_tools.sh ${{ env.TOOLS_VERSION }}
       - name: Checkout Pico SDK
         uses: actions/checkout@v4
         with:
