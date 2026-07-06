@@ -30,10 +30,10 @@ permissions:
   contents: write
 
 env:
-  SDK_TOOLS_VERSION: ${{ inputs.sdk_tools_version != '' && inputs.sdk_tools_version || '2.2.0' }}
-  PICO_SDK_TAG: ${{ inputs.pico_sdk_tag != '' && inputs.pico_sdk_tag || '2.2.0' }}
+  SDK_TOOLS_VERSION: ${{ inputs.sdk_tools_version != '' && inputs.sdk_tools_version || '2.3.0' }}
+  PICO_SDK_TAG: ${{ inputs.pico_sdk_tag != '' && inputs.pico_sdk_tag || '2.3.0' }}
   # This commit is raspberrypi/pico-examples#746
-  PICO_EXAMPLES_TAG: ${{ inputs.pico_examples_tag != '' && inputs.pico_examples_tag || '41a1b48271a797c9d7c5a64052f24db8514cddfb' }}
+  PICO_EXAMPLES_TAG: ${{ inputs.pico_examples_tag != '' && inputs.pico_examples_tag || 'sdk-2.3.0' }}
   PICO_SDK_REPO: ${{ inputs.pico_sdk_repo != '' && inputs.pico_sdk_repo || 'raspberrypi/pico-sdk' }}
   PICO_EXAMPLES_REPO: ${{ inputs.pico_examples_repo != '' && inputs.pico_examples_repo || 'raspberrypi/pico-examples' }}
 
