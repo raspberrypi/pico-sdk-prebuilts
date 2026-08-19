@@ -6,3 +6,16 @@ This repository is used to provide pre-built UF2s of some of the universal [Pico
 - [`hello_universal.uf2`](https://github.com/raspberrypi/pico-sdk-prebuilts/releases/latest/download/hello_universal.uf2) - Prints "Hello, world!" over USB and UART (using GPIO0 for UART TX, with baudrate 115200). On RP2350 based boards, it reboots between Arm and Risc-V architectures every 10s.
 
 These can be dragged & dropped onto any RP2-series microcontroller based board, although the LED will only work on boards with the same LED GPIO as the Pico-series boards (GPIO 25).
+
+## Building
+
+The UF2s are built by [`.github/workflows/build.yml`](.github/workflows/build.yml).
+The toolchains, `picotool`, `pioasm`, CMake and ninja are installed by the
+[`raspberrypi/pico-sdk-tools`](https://github.com/raspberrypi/pico-sdk-tools)
+action, which downloads the exact versions the Pico VS Code extension pins for a
+given SDK version, caches them, and puts them on `PATH` for the rest of the job.
+
+Run it by hand from the *Actions* tab; the `workflow_dispatch` inputs let you
+override the SDK tools version, and the tag or repository used for `pico-sdk`
+and `pico-examples`. Pushing a tag additionally uploads the three UF2s to the
+corresponding release.

@@ -54,20 +54,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
       - name: Install dependencies
-        run: sudo apt install cmake ninja-build python3 build-essential libusb-1.0-0-dev
-      - name: Cache Toolchains
-        id: cache-toolchains
-        uses: actions/cache@v5
-        with:
-          path: |
-            arm-toolchain
-            riscv-toolchain
-            picotool
-            pico-sdk-tools
-          key: ${{ runner.os }}-${{ runner.arch }}-${{ env.SDK_TOOLS_VERSION }}-toolchains
+        # picotool links against libusb at runtime; CMake and ninja come from
+        # the toolchain install below
+        run: sudo apt install libusb-1.0-0
+      # Installs the Arm and RISC-V toolchains, picotool and pioasm, plus the
+      # CMake and ninja versions the Pico VS Code extension pins for this SDK,
+      # into ~/.pico-sdk and onto PATH. Caches them itself.
+      # TODO: move to @main once raspberrypi/pico-sdk-tools#add-installer lands
       - name: Install Toolchains & Tools
-        if: steps.cache-toolchains.outputs.cache-hit != 'true'
-        run: ./download_extract_tools.sh ${{ env.SDK_TOOLS_VERSION }}
+        uses: raspberrypi/pico-sdk-tools/installer@add-installer
+        with:
+          sdk-version: ${{ env.SDK_TOOLS_VERSION }}
       - name: Checkout Pico SDK
         uses: actions/checkout@v6
         with:
@@ -82,14 +79,14 @@ jobs:
           ref: ${{ env.PICO_EXAMPLES_TAG }}
           path: pico-examples
       - name: Build Universal UF2s
+        # picotool_DIR and pioasm_DIR are already in the environment, and the
+        # compilers are found on PATH. The universal examples are the exception:
+        # they check the two toolchains are DEFINED as CMake variables.
         run: |
           cmake -S pico-examples -B build-universal -G "Ninja" \
             -D PICO_SDK_PATH="${{ github.workspace }}/pico-sdk" \
-            -D PICO_TOOLCHAIN_PATH="${{ github.workspace }}/arm-toolchain" \
-            -D PICO_ARM_TOOLCHAIN_PATH="${{ github.workspace }}/arm-toolchain" \
-            -D PICO_RISCV_TOOLCHAIN_PATH="${{ github.workspace }}/riscv-toolchain" \
-            -D picotool_DIR="${{ github.workspace }}/picotool/picotool" \
-            -D pioasm_DIR="${{ github.workspace }}/pico-sdk-tools/pioasm"
+            -D PICO_ARM_TOOLCHAIN_PATH="$PICO_ARM_TOOLCHAIN_PATH" \
+            -D PICO_RISCV_TOOLCHAIN_PATH="$PICO_RISCV_TOOLCHAIN_PATH"
           cmake --build build-universal --target hello_universal blink_universal nuke_universal
       - name: Upload UF2s
         uses: actions/upload-artifact@v6
