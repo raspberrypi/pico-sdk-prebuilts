@@ -52,7 +52,7 @@ jobs:
           echo "PICO_SDK_REPO=${{ env.PICO_SDK_REPO }}"
           echo "PICO_EXAMPLES_REPO=${{ env.PICO_EXAMPLES_REPO }}"
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Install dependencies
         # picotool links against libusb at runtime; CMake and ninja come from
         # the toolchain install below
@@ -66,14 +66,14 @@ jobs:
         with:
           sdk-version: ${{ env.SDK_TOOLS_VERSION }}
       - name: Checkout Pico SDK
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: ${{ env.PICO_SDK_REPO }}
           ref: ${{ env.PICO_SDK_TAG }}
           path: pico-sdk
           submodules: 'recursive'
       - name: Checkout Pico Examples
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: ${{ env.PICO_EXAMPLES_REPO }}
           ref: ${{ env.PICO_EXAMPLES_TAG }}
