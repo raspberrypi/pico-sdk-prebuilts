@@ -25,7 +25,7 @@ from pathlib import Path
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-DEFAULT_EXTENSION_DATA_URL = "https://raspberrypi.github.io/pico-vscode/0.18.0"
+DEFAULT_EXTENSION_DATA_URL = "https://raspberrypi.github.io/pico-vscode/0.22.0"
 
 # Asset suffixes on raspberrypi/pico-sdk-tools (match extension / GitHub release layout)
 _PICO_SDK_TOOLS_ASSETS: dict[str, tuple[str, str]] = {
