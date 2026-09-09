@@ -82,6 +82,13 @@ jobs:
         # picotool_DIR and pioasm_DIR are already in the environment, and the
         # compilers are found on PATH. The universal examples are the exception:
         # they check the two toolchains are DEFINED as CMake variables.
+        env:
+          # Leave the build date out of the binary info, so rebuilding the same
+          # sources gives byte-identical UF2s. Set through CFLAGS, which CMake
+          # seeds CMAKE_C_FLAGS from, because each platform of a universal
+          # binary is a separate ExternalProject with a fixed CMAKE_ARGS list:
+          # it inherits the environment, but not anything passed with -D here.
+          CFLAGS: -DPICO_NO_BI_PROGRAM_BUILD_DATE=1
         run: |
           cmake -S pico-examples -B build-universal -G "Ninja" \
             -D PICO_SDK_PATH="${{ github.workspace }}/pico-sdk" \
