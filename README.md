@@ -9,6 +9,4 @@ These can be dragged & dropped onto any RP2-series microcontroller based board, 
 
 ## Building
 
-The UF2s are built by [`.github/workflows/build.yml`](.github/workflows/build.yml). The Arm GCC and RISC-V GCC toolchains, `picotool`, `pioasm`, CMake and ninja are installed by the [`raspberrypi/pico-sdk-tools`](https://github.com/raspberrypi/pico-sdk-tools) action, which downloads the exact versions the Pico VS Code extension pins for a given SDK version, caches them, and puts them on `PATH` for the rest of the job.
-
-Run it by hand from the *Actions* tab; the `workflow_dispatch` inputs let you override the SDK tools version, and the tag or repository used for `pico-sdk` and `pico-examples`. Pushing a tag additionally uploads the three UF2s to the corresponding release.
+The UF2s are built by [`.github/workflows/build.yml`](.github/workflows/build.yml), using the same Arm and RISC-V toolchains, `picotool`, `pioasm`, CMake and ninja the Pico VS Code extension uses for a given SDK version.
