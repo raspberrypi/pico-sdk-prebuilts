@@ -60,9 +60,8 @@ jobs:
       # Installs the Arm and RISC-V toolchains, picotool and pioasm, plus the
       # CMake and ninja versions the Pico VS Code extension pins for this SDK,
       # into ~/.pico-sdk and onto PATH. Caches them itself.
-      # TODO: move to @main once raspberrypi/pico-sdk-tools#add-installer lands
       - name: Install Toolchains & Tools
-        uses: raspberrypi/pico-sdk-tools/installer@add-installer
+        uses: raspberrypi/pico-sdk-tools/installer@main
         with:
           sdk-version: ${{ env.SDK_TOOLS_VERSION }}
       - name: Checkout Pico SDK
